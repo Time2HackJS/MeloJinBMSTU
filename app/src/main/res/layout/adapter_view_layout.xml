@@ -46,7 +46,8 @@
             android:layout_gravity="center"
             android:gravity="left"
             android:text="Чтоб это делать"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
 
     </LinearLayout>
 

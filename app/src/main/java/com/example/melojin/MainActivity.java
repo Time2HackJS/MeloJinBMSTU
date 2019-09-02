@@ -30,12 +30,22 @@ public class MainActivity extends AppCompatActivity {
         Song s2 = new Song("ME & CREED", "SawanoHiroyuki[nZk]:Sayuri", "poster_2", 0);
         Song s3 = new Song("The Court of the Crimson King", "King Crimson", "poster_3", 0);
         Song s4 = new Song("Eonian", "ELISA", "poster_4", 0);
+        Song s5 = new Song("Resister", "ASCA", "poster_5", 0);
+        Song s6 = new Song("2045", "MAN WITH A MISSION", "poster_6", 0);
+        Song s7 = new Song("Narrative", "SawanoHiroyuki[nZk]:LiSA", "poster_7", 0);
+        Song s8 = new Song("In The Way", "Stephen Stills", "poster_8", 0);
+        Song s9 = new Song("I Just Died In Your Arms Tonight", "Cutting Crew", "poster_9", 0);
 
         // Add the Song objects to an ArrayList
         songList.add(s1);
         songList.add(s2);
         songList.add(s3);
         songList.add(s4);
+        songList.add(s5);
+        songList.add(s6);
+        songList.add(s7);
+        songList.add(s8);
+        songList.add(s9);
 
         final SongListAdapter adapter = new SongListAdapter(this, R.layout.adapter_view_layout, songList);
         songListView.setAdapter(adapter);
