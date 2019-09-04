@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "315356277700",
+    "firebase_url": "https://melojin-32ac7.firebaseio.com",
+    "project_id": "melojin-32ac7",
+    "storage_bucket": "melojin-32ac7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315356277700:android:261bb83a1ca041ec",
+        "android_client_info": {
+          "package_name": "com.example.melojin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "315356277700-tto9lkdb7b6tmtsdu1sgkvnb9rs97stq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.melojin",
+            "certificate_hash": "b81b4a02f5d0ef745d71f5244cb4b2400b05e58e"
+          }
+        },
+        {
+          "client_id": "315356277700-s2o9vao68rstoibpk7jfctu4is80hv0p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAkxnOQXVab9Enve-jNE3xfqgcFrvi0wo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "315356277700-s2o9vao68rstoibpk7jfctu4is80hv0p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
