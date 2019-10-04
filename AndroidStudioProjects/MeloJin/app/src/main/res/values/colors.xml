@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#212838</color>
+    <color name="colorPrimaryMiddle">#1D2433</color>
     <color name="colorPrimaryDark">#12151E</color>
     <color name="colorAccent">#D81B60</color>
     <color name="songSelectBackground">#72000000</color>
+    <color name="white">#FFFFFF</color>
 </resources>

@@ -1,30 +1,41 @@
-package com.example.melojin;
-import androidx.appcompat.app.AppCompatActivity;
+package com.example.melojin.fragments;
+
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.ListView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.example.melojin.R;
+import com.example.melojin.classes.Song;
+import com.example.melojin.classes.SongListAdapter;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MusicFragment extends Fragment {
 
-    private static String TAG = "MainActivity";
+    private ListView songListView;
+    private ArrayList<Song> songList = new ArrayList<>();
+    private SongListAdapter adapter;
 
+    public static MusicFragment newInstance() {
+        MusicFragment musicFragment = new MusicFragment();
+
+        return musicFragment;
+    }
+
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getSupportActionBar().setTitle("My Music");
-        setContentView(R.layout.activity_main);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.activity_main, container, false);
 
-        final ArrayList<Song> songList = new ArrayList<>();
-        final ListView songListView = findViewById(R.id.listView);
-
-        Log.d(TAG, "onCreate: Started.");
+        // reference
+        songListView = rootView.findViewById(R.id.listView);
 
         // Create the Song objects
         Song s1 = new Song("Scatman's World", "John Scatman", "poster_1", 0);
@@ -48,10 +59,10 @@ public class MainActivity extends AppCompatActivity {
         songList.add(s8);
         songList.add(s9);
 
-        final SongListAdapter adapter = new SongListAdapter(this, R.layout.adapter_view_layout, songList);
+        // adapter
+        adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, songList);
         songListView.setAdapter(adapter);
 
-        // Set an item click listener for ListView
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             Integer prevPosition = 0;
 
@@ -74,35 +85,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-        // Завтрашний Я. Разберись, пожалуйста, с этим говном. Это поиск.
-
-        /*
-        final EditText searchField = findViewById(R.id.fieldSearch);
-
-
-        searchField.addTextChangedListener(new TextWatcher() {
-
-            String fieldValue = searchField.getText().toString();
-
-            ArrayList<Song> songSearchList = new ArrayList<>();
-
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-            @Override
-            public void afterTextChanged(Editable editable) {}
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                for (int i = 0; i < songList.size(); i++) {
-                    Song currsong = (Song) songList.get(i);
-                    if (currsong.getArtist().contains(fieldValue) || currsong.getName().contains(fieldValue)) {
-                        songSearchList.add(currsong);
-                    }
-                }
-            }
-        });
-        */
+        return rootView;
     }
 }

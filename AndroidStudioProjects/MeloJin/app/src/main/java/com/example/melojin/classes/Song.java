@@ -1,4 +1,4 @@
-package com.example.melojin;
+package com.example.melojin.classes;
 
 public class Song {
     private String name;
