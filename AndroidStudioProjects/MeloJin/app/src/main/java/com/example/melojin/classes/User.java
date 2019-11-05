@@ -3,9 +3,7 @@ package com.example.melojin.classes;
 public class User {
     public String name, email;
 
-    public User(){
-
-    }
+    public User() {}
 
     public User(String name, String email) {
         this.name = name;

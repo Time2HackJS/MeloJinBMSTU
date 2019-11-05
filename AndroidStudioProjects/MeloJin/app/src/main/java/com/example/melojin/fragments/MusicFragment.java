@@ -14,14 +14,18 @@ import androidx.fragment.app.Fragment;
 import com.example.melojin.R;
 import com.example.melojin.classes.Song;
 import com.example.melojin.classes.SongListAdapter;
-
-import java.util.ArrayList;
+import com.example.melojin.classes.UserConfig;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MusicFragment extends Fragment {
 
     private ListView songListView;
-    private ArrayList<Song> songList = new ArrayList<>();
     private SongListAdapter adapter;
+    DatabaseReference databaseReference;
 
     public static MusicFragment newInstance() {
         MusicFragment musicFragment = new MusicFragment();
@@ -33,35 +37,43 @@ public class MusicFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.activity_main, container, false);
-
-        // reference
-        songListView = rootView.findViewById(R.id.listView);
-
-        // Create the Song objects
-        Song s1 = new Song("Scatman's World", "John Scatman", "poster_1", 0);
-        Song s2 = new Song("ME & CREED", "SawanoHiroyuki[nZk]:Sayuri", "poster_2", 0);
-        Song s3 = new Song("The Court of the Crimson King", "King Crimson", "poster_3", 0);
-        Song s4 = new Song("Eonian", "ELISA", "poster_4", 0);
-        Song s5 = new Song("Resister", "ASCA", "poster_5", 0);
-        Song s6 = new Song("2045", "MAN WITH A MISSION", "poster_6", 0);
-        Song s7 = new Song("Narrative", "SawanoHiroyuki[nZk]:LiSA", "poster_7", 0);
-        Song s8 = new Song("In The Way", "Stephen Stills", "poster_8", 0);
-        Song s9 = new Song("I Just Died In Your Arms Tonight", "Cutting Crew", "poster_9", 0);
-
-        // Add the Song objects to an ArrayList
-        songList.add(s1);
-        songList.add(s2);
-        songList.add(s3);
-        songList.add(s4);
-        songList.add(s5);
-        songList.add(s6);
-        songList.add(s7);
-        songList.add(s8);
-        songList.add(s9);
+        UserConfig.getInstance().songList.clear();
 
         // adapter
-        adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, songList);
+        songListView = rootView.findViewById(R.id.listView);
+        adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, UserConfig.getInstance().songList);
         songListView.setAdapter(adapter);
+
+        // read music tracks from FirebaseDatabase
+        databaseReference = FirebaseDatabase.getInstance().getReference("songs");
+        databaseReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Song value = dataSnapshot.getValue(Song.class);
+                UserConfig.getInstance().songList.add(value);
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             Integer prevPosition = 0;

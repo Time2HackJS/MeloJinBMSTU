@@ -17,10 +17,9 @@
         android:background="#00FD0303"
         android:gravity="center"
         android:scaleType="centerInside"
-        android:scaleX="0.8"
-        android:scaleY="0.8"
-        android:textAlignment="center"
-        app:srcCompat="@mipmap/ic_launcher" />
+        android:scaleX="1.1"
+        android:scaleY="1.1"
+        android:textAlignment="center" />
 
 
     <LinearLayout

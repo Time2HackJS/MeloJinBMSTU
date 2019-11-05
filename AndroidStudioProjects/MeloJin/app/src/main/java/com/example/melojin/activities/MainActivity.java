@@ -4,7 +4,10 @@ import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String TAG = "MainActivity";
+    private static final String TAG = "MJ: MainActivity";
+
+    @Override
+    public void onBackPressed(){}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

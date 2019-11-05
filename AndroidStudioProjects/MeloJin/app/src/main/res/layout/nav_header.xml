@@ -24,7 +24,6 @@
         android:textColor="#FFFFFF"/>
 
     <TextView
-
         android:id="@+id/navEmail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

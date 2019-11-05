@@ -34,7 +34,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/linearLayout"
         app:layout_constraintVertical_bias="0.188"
-        tools:srcCompat="@drawable/avatar_sample" />
+        tools:srcCompat="@drawable/avatar_sample"
+        />
 
     <TextView
         android:id="@+id/userNickname"

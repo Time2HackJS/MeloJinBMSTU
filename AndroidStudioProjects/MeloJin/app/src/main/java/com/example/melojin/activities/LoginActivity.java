@@ -5,53 +5,92 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.melojin.R;
+
+import com.example.melojin.classes.UserConfig;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity {
 
-    EditText emailET, passwordET;
+    //
+    // initializing activity elements
+    //
+
+    EditText emailET;
+    EditText passwordET;
     Button btnLogin;
     TextView tvRegister;
     FirebaseAuth mFirebaseAuth;
-    private FirebaseAuth.AuthStateListener mAuthStateListener;
 
+    private FirebaseAuth.AuthStateListener mAuthStateListener;
+    private static final String TAG = "MJ: LoginActivity";
+
+    // overriding back button to prevent unlogged using of app
     @Override
-    public void onBackPressed() {
-        // don't you go unloginned, scum
-    }
+    public void onBackPressed() {}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "ACTIVITY STARTED");
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                             WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_login);
 
-        mFirebaseAuth = FirebaseAuth.getInstance();
+        //
+        // initializing activity elements
+        //
+
         emailET = findViewById(R.id.editEmail);
         passwordET = findViewById(R.id.editPassword);
         btnLogin = findViewById(R.id.buttonLogin);
         tvRegister = findViewById(R.id.createText);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+
+        //
+        // getting user nickname from firebase database
+        //
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser mFirebaseUser = mFirebaseAuth.getCurrentUser();
                 if (mFirebaseUser != null) {
-                    // Toast.makeText(LoginActivity.this, "You are logged in", Toast.LENGTH_SHORT).show();
+
+                    DatabaseReference user = FirebaseDatabase.getInstance().getReference("users").child(mFirebaseUser.getUid());
+                        user.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                String name = dataSnapshot.child("name").getValue(String.class);
+                                String email = dataSnapshot.child("email").getValue(String.class);
+
+                                UserConfig.getInstance().userName = name;
+                                UserConfig.getInstance().userEmail = email;
+
+                                Log.i(TAG, "GOT " + name + " AND " + email);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {}
+                        });
+
                     Intent i = new Intent(LoginActivity.this, SliderActivity.class);
                     startActivity(i);
                 }

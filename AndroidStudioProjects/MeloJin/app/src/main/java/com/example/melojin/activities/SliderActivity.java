@@ -6,17 +6,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.melojin.classes.UserConfig;
 import com.example.melojin.fragments.MusicFragment;
 import com.example.melojin.fragments.ProfileFragment;
+
 import com.example.melojin.R;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,23 +29,41 @@ import com.google.firebase.database.ValueEventListener;
 
 public class SliderActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private DrawerLayout mDrawer;
-    private TextView sampleName, sampleEmail;
     private FirebaseAuth mFirebaseAuth;
+    private FirebaseUser mFirebaseUser;
+    private static final String TAG = "MJ: SliderActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        Log.i(TAG, "ACTIVITY STARTED");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_slider);
 
         // add Nickname and Email to UserConfig
         mFirebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        DatabaseReference user = FirebaseDatabase.getInstance().getReference("users").child(mFirebaseUser.getUid()).child("name");
-        user.addListenerForSingleValueEvent(new ValueEventListener() {
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+
+        // get nickname and email from firebase
+        DatabaseReference user = FirebaseDatabase.getInstance().getReference("users").child(mFirebaseUser.getUid());
+
+        // thread started
+        user.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String name = dataSnapshot.getValue(String.class);
-                UserConfig.userName = name;
+                String name = dataSnapshot.child("name").getValue(String.class);
+                String email = dataSnapshot.child("email").getValue(String.class);
+
+                UserConfig.getInstance().userName = name;
+                UserConfig.getInstance().userEmail = email;
+
+                NavigationView navigationView = findViewById(R.id.nav_view);
+                View headerView = navigationView.getHeaderView(0);
+                TextView navUsername = headerView.findViewById(R.id.navUsername);
+                TextView navEmail = headerView.findViewById(R.id.navEmail);
+                navUsername.setText(UserConfig.getInstance().userName);
+                navEmail.setText(UserConfig.getInstance().userEmail);
             }
 
             @Override
@@ -53,21 +71,14 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
 
             }
         });
-        UserConfig.userEmail = mFirebaseUser.getEmail();
 
         // change header Email and Nickname
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mDrawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        View headerView = navigationView.getHeaderView(0);
-        TextView navUsername = headerView.findViewById(R.id.navUsername);
-        TextView navEmail = headerView.findViewById(R.id.navEmail);
-        navUsername.setText(UserConfig.userName);
-        navEmail.setText(UserConfig.userEmail);
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, mDrawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -83,7 +94,7 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
+        // handling navigation view item clicks
         switch (item.getItemId()) {
             case R.id.nav_profile:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
