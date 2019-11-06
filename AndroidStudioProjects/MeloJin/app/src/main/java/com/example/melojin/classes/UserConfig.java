@@ -1,5 +1,9 @@
 package com.example.melojin.classes;
 
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+
 import java.util.ArrayList;
 
 public class UserConfig {
@@ -17,4 +21,6 @@ public class UserConfig {
     public String userName;
     public String userEmail;
     public ArrayList<Song> songList = new ArrayList<>();
+    public Integer prevPosition;
+    public View preView;
 }

@@ -1,14 +1,18 @@
 package com.example.melojin.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.melojin.R;
@@ -22,6 +26,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class MusicFragment extends Fragment {
+
+    private Integer prevPosition = -1;
+    private ImageView prevImageView;
+    private LinearLayout prevLayout;
+    private Song prevSong;
 
     private ListView songListView;
     private SongListAdapter adapter;
@@ -76,24 +85,42 @@ public class MusicFragment extends Fragment {
         });
 
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            Integer prevPosition = 0;
-
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
                 // Get the selected item
                 Song selectedSong = (Song) parent.getItemAtPosition(position);
 
+                ImageView ivState = view.findViewById(R.id.song_button);
+                LinearLayout layout = view.findViewById(R.id.song_layout);
+
                 if (selectedSong.getPlay_state() == 0 || selectedSong.getPlay_state() == 2) {
                     selectedSong.setPlay_state(1);
-                } else selectedSong.setPlay_state(2);
+                    ivState.setImageResource(R.drawable.song_pause);
+                    layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
+                } else {
+                    selectedSong.setPlay_state(2);
+                    ivState.setImageResource(R.drawable.song_play);
+                }
+
+                if (prevPosition == -1) prevPosition = position;
 
                 if (prevPosition != position) {
-                    Song prevSong = (Song) parent.getItemAtPosition(prevPosition);
+                    if (prevPosition == UserConfig.getInstance().prevPosition) {
+                        prevImageView = UserConfig.getInstance().preView.findViewById(R.id.song_button);
+                        prevLayout = UserConfig.getInstance().preView.findViewById(R.id.song_layout);
+                    }
+
+                    prevImageView.setImageResource(0);
+                    prevLayout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.zalupa));
                     prevSong.setPlay_state(0);
                 }
 
                 prevPosition = position;
-                adapter.notifyDataSetChanged();
+                prevLayout = layout;
+                prevImageView = ivState;
+                prevSong = selectedSong;
+                //adapter.notifyDataSetChanged();
             }
         });
 

@@ -1,6 +1,7 @@
 package com.example.melojin.classes;
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,11 @@ public class SongListAdapter extends ArrayAdapter<Song> {
         ImageView ivState = convertView.findViewById(R.id.song_button);
         LinearLayout layout = convertView.findViewById(R.id.song_layout);
 
+        if (song_state != 0) {
+            UserConfig.getInstance().prevPosition = position;
+            UserConfig.getInstance().preView = convertView;
+        }
+
         // get image from Firebase storage
         StorageReference storageReference = FirebaseStorage.getInstance().getReference();
         storageReference.child("posters_small/" + song_id + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -86,6 +92,7 @@ public class SongListAdapter extends ArrayAdapter<Song> {
 
         Animation animation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
         convertView.startAnimation(animation);
+
         return convertView;
     }
 }
