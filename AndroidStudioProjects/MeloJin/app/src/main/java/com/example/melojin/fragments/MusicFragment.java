@@ -47,6 +47,7 @@ public class MusicFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.activity_main, container, false);
         UserConfig.getInstance().songList.clear();
+        getActivity().getWindow().setBackgroundDrawableResource(R.drawable.main_background);
 
         // adapter
         songListView = rootView.findViewById(R.id.listView);
