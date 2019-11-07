@@ -104,23 +104,24 @@ public class MusicFragment extends Fragment {
 
                 // Get the selected item
                 Song selectedSong = (Song) parent.getItemAtPosition(position);
+                UserConfig.getInstance().currentSong = selectedSong;
 
                 ImageView ivState = view.findViewById(R.id.song_button);
                 LinearLayout layout = view.findViewById(R.id.song_layout);
 
                 if (selectedSong.getPlay_state() == 0) {
-                    stop(rootView);
-                    play(rootView, selectedSong);
+                    stopSong();
+                    playSong(selectedSong);
                     selectedSong.setPlay_state(1);
                     ivState.setImageResource(R.drawable.song_pause);
                     layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
                 } else if (selectedSong.getPlay_state() == 2) {
-                    play(rootView, selectedSong);
+                    playSong(selectedSong);
                     selectedSong.setPlay_state(1);
                     ivState.setImageResource(R.drawable.song_pause);
                     layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
                 } else {
-                    pause(rootView);
+                    pauseSong();
                     selectedSong.setPlay_state(2);
                     ivState.setImageResource(R.drawable.song_play);
                 }
@@ -149,32 +150,7 @@ public class MusicFragment extends Fragment {
         return rootView;
     }
 
-    public void play(View v) {
-        if (UserConfig.getInstance().player == null) {
-            UserConfig.getInstance().player = MediaPlayer.create(v.getContext(), R.raw.song);
-        }
-
-        UserConfig.getInstance().player.start();
-    }
-
-    public void pause(View v) {
-        if (UserConfig.getInstance().player != null) {
-            UserConfig.getInstance().player.pause();
-        }
-    }
-
-    public void stop(View v) {
-        stopPlayer();
-    }
-
-    private void stopPlayer() {
-        if (UserConfig.getInstance().player != null) {
-            UserConfig.getInstance().player.release();
-            UserConfig.getInstance().player = null;
-        }
-    }
-
-    private void play(View v, Song s) {
+    private void playSong(Song s) {
         UserConfig.getInstance().player = new MediaPlayer();
         StorageReference storageReference = FirebaseStorage.getInstance().getReference();
         storageReference.child("songs/song_" + s.getSong_id() + ".mp3").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -196,5 +172,22 @@ public class MusicFragment extends Fragment {
                 }
             }
         });
+    }
+
+    public void pauseSong() {
+        if (UserConfig.getInstance().player != null) {
+            UserConfig.getInstance().player.pause();
+        }
+    }
+
+    public void stopSong() {
+        stopPlayer();
+    }
+
+    private void stopPlayer() {
+        if (UserConfig.getInstance().player != null) {
+            UserConfig.getInstance().player.release();
+            UserConfig.getInstance().player = null;
+        }
     }
 }
