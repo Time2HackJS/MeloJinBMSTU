@@ -1,5 +1,7 @@
 package com.example.melojin.fragments;
 
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,11 +21,17 @@ import com.example.melojin.R;
 import com.example.melojin.classes.Song;
 import com.example.melojin.classes.SongListAdapter;
 import com.example.melojin.classes.UserConfig;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
+
+import java.io.IOException;
 
 public class MusicFragment extends Fragment {
 
@@ -45,45 +53,50 @@ public class MusicFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.activity_main, container, false);
-        UserConfig.getInstance().songList.clear();
+        final View rootView = inflater.inflate(R.layout.activity_main, container, false);
+        //UserConfig.getInstance().songList.clear();
         getActivity().getWindow().setBackgroundDrawableResource(R.drawable.main_background);
 
         // adapter
         songListView = rootView.findViewById(R.id.listView);
         adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, UserConfig.getInstance().songList);
         songListView.setAdapter(adapter);
+        //adapter.notifyDataSetChanged();
 
-        // read music tracks from FirebaseDatabase
-        databaseReference = FirebaseDatabase.getInstance().getReference("songs");
-        databaseReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Song value = dataSnapshot.getValue(Song.class);
-                UserConfig.getInstance().songList.add(value);
-                adapter.notifyDataSetChanged();
-            }
+        if (UserConfig.getInstance().songList.isEmpty()) {
+            Log.i("FUCK", "YAY");
+            // read music tracks from FirebaseDatabase
+            databaseReference = FirebaseDatabase.getInstance().getReference("songs");
+            databaseReference.addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    Song value = dataSnapshot.getValue(Song.class);
+                    UserConfig.getInstance().songList.add(value);
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    adapter.notifyDataSetChanged();
+                }
 
-            }
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                }
 
-            }
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
 
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                }
 
-            }
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+                }
 
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+         }
 
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -95,11 +108,19 @@ public class MusicFragment extends Fragment {
                 ImageView ivState = view.findViewById(R.id.song_button);
                 LinearLayout layout = view.findViewById(R.id.song_layout);
 
-                if (selectedSong.getPlay_state() == 0 || selectedSong.getPlay_state() == 2) {
+                if (selectedSong.getPlay_state() == 0) {
+                    stop(rootView);
+                    play(rootView, selectedSong);
+                    selectedSong.setPlay_state(1);
+                    ivState.setImageResource(R.drawable.song_pause);
+                    layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
+                } else if (selectedSong.getPlay_state() == 2) {
+                    play(rootView, selectedSong);
                     selectedSong.setPlay_state(1);
                     ivState.setImageResource(R.drawable.song_pause);
                     layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
                 } else {
+                    pause(rootView);
                     selectedSong.setPlay_state(2);
                     ivState.setImageResource(R.drawable.song_play);
                 }
@@ -126,5 +147,54 @@ public class MusicFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    public void play(View v) {
+        if (UserConfig.getInstance().player == null) {
+            UserConfig.getInstance().player = MediaPlayer.create(v.getContext(), R.raw.song);
+        }
+
+        UserConfig.getInstance().player.start();
+    }
+
+    public void pause(View v) {
+        if (UserConfig.getInstance().player != null) {
+            UserConfig.getInstance().player.pause();
+        }
+    }
+
+    public void stop(View v) {
+        stopPlayer();
+    }
+
+    private void stopPlayer() {
+        if (UserConfig.getInstance().player != null) {
+            UserConfig.getInstance().player.release();
+            UserConfig.getInstance().player = null;
+        }
+    }
+
+    private void play(View v, Song s) {
+        UserConfig.getInstance().player = new MediaPlayer();
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+        storageReference.child("songs/song_" + s.getSong_id() + ".mp3").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                try {
+                    UserConfig.getInstance().player.setDataSource(uri.toString());
+
+                    UserConfig.getInstance().player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mediaPlayer) {
+                            mediaPlayer.start();
+                        }
+                    });
+
+                    UserConfig.getInstance().player.prepareAsync();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

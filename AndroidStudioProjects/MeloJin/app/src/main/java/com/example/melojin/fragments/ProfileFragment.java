@@ -1,5 +1,6 @@
 package com.example.melojin.fragments;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,10 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.activity_profile, container, false);
+
+        if (UserConfig.getInstance().songList.isEmpty()) {
+            Log.i("FUCK", "HUH");
+        }
 
         // set avatar
         avatarImageView = rootView.findViewById(R.id.avatarImage);

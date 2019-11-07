@@ -1,6 +1,7 @@
 package com.example.melojin.activities;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -13,6 +14,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.melojin.classes.Song;
 import com.example.melojin.classes.UserConfig;
 import com.example.melojin.fragments.MusicFragment;
 import com.example.melojin.fragments.ProfileFragment;
@@ -21,6 +24,7 @@ import com.example.melojin.R;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,6 +35,7 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
     private DrawerLayout mDrawer;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
+    DatabaseReference databaseReference;
     private static final String TAG = "MJ: SliderActivity";
 
     @Override

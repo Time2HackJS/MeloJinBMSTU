@@ -68,6 +68,7 @@ public class SongListAdapter extends ArrayAdapter<Song> {
         }
 
         // get image from Firebase storage
+
         StorageReference storageReference = FirebaseStorage.getInstance().getReference();
         storageReference.child("posters_small/" + song_id + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
@@ -92,6 +93,8 @@ public class SongListAdapter extends ArrayAdapter<Song> {
 
         Animation animation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
         convertView.startAnimation(animation);
+
+        Log.i("CHECK", UserConfig.getInstance().songList.get(0).getPlay_state().toString());
 
         return convertView;
     }

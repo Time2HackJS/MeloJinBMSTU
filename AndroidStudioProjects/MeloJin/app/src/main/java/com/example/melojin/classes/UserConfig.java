@@ -1,8 +1,7 @@
 package com.example.melojin.classes;
 
+import android.media.MediaPlayer;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
@@ -23,4 +22,5 @@ public class UserConfig {
     public ArrayList<Song> songList = new ArrayList<>();
     public Integer prevPosition;
     public View preView;
+    public MediaPlayer player;
 }
