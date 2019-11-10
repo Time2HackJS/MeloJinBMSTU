@@ -35,7 +35,8 @@
             android:gravity="bottom|center|left"
             android:text="Ты кто такой"
             android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:singleLine="true"/>
 
         <TextView
             android:id="@+id/song_artist"

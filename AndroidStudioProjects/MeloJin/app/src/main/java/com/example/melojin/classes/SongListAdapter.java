@@ -8,12 +8,14 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
+import android.widget.Filter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.melojin.R;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -62,6 +64,8 @@ public class SongListAdapter extends ArrayAdapter<Song> {
         ImageView ivState = convertView.findViewById(R.id.song_button);
         LinearLayout layout = convertView.findViewById(R.id.song_layout);
 
+        tvName.setSelected(true);
+
         if (song_state != 0) {
             UserConfig.getInstance().prevPosition = position;
             UserConfig.getInstance().preView = convertView;
@@ -73,7 +77,7 @@ public class SongListAdapter extends ArrayAdapter<Song> {
         storageReference.child("posters_small/" + song_id + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
-                Picasso.with(mContext).load(uri).into(ivSource);
+                Glide.with(mContext).load(uri).into(ivSource);
             }
         });
 
