@@ -24,5 +24,6 @@ public class UserConfig {
     public View preView;
     public MediaPlayer player;
     public Song currentSong;
+    public Song prevSong;
     public String searchString;
 }

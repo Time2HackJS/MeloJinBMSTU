@@ -66,11 +66,14 @@ public class MusicFragment extends Fragment {
         // adapter
         songListView = rootView.findViewById(R.id.listView);
         adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, UserConfig.getInstance().songList);
+
         if (UserConfig.getInstance().searchString == null) {
             songListView.setAdapter(adapter);
         }
-        else
-            songListView.setAdapter(new SongListAdapter(getActivity(), R.layout.adapter_view_layout, filterList(UserConfig.getInstance().searchString)));
+        else {
+            searchAdapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, filterList(UserConfig.getInstance().searchString));
+            songListView.setAdapter(searchAdapter);
+        }
 
         etSearch = rootView.findViewById(R.id.fieldSearch);
         etSearch.setText(UserConfig.getInstance().searchString);
@@ -89,7 +92,11 @@ public class MusicFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if (etSearch.getText().toString().isEmpty()) songListView.setAdapter(adapter);
+                if (etSearch.getText().toString().isEmpty())
+                {
+                    songListView.setAdapter(adapter);
+                    //for (Song v : UserConfig.getInstance().songList) v.setPlay_state(0);
+                }
                 else {
                     UserConfig.getInstance().searchString = etSearch.getText().toString();
                     searchAdapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, filterList(UserConfig.getInstance().searchString));
@@ -141,9 +148,6 @@ public class MusicFragment extends Fragment {
                 Song selectedSong = (Song) parent.getItemAtPosition(position);
                 UserConfig.getInstance().currentSong = selectedSong;
 
-                ImageView ivState = view.findViewById(R.id.song_button);
-                LinearLayout layout = view.findViewById(R.id.song_layout);
-
                 if (selectedSong.getPlay_state() == 0) {
                     stopSong();
                     if (etSearch.getText().toString().isEmpty())
@@ -151,25 +155,35 @@ public class MusicFragment extends Fragment {
                     else
                         playSong(selectedSong, position, filterList(etSearch.getText().toString()));
                     selectedSong.setPlay_state(1);
+                    SystemClock.sleep(1000);
+                    /*
+                    selectedSong.setPlay_state(1);
                     ivState.setImageResource(R.drawable.song_pause);
                     layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
+                     */
                 } else if (selectedSong.getPlay_state() == 2) {
                     if (etSearch.getText().toString().isEmpty())
                         playSong(selectedSong, position, UserConfig.getInstance().songList);
                     else
                         playSong(selectedSong, position, filterList(etSearch.getText().toString()));
                     selectedSong.setPlay_state(1);
+                    /*
                     ivState.setImageResource(R.drawable.song_pause);
                     layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
+                    */
                 } else {
                     pauseSong();
                     selectedSong.setPlay_state(2);
+                    /*
+                    selectedSong.setPlay_state(2);
                     ivState.setImageResource(R.drawable.song_play);
+                     */
                 }
 
-                if (prevPosition == -1) prevPosition = position;
+                if (UserConfig.getInstance().prevPosition == null) UserConfig.getInstance().prevPosition = position;
 
-                if (prevPosition != position) {
+                if (UserConfig.getInstance().prevPosition != position) {
+                    /*
                     if (prevPosition == UserConfig.getInstance().prevPosition) {
                         prevImageView = UserConfig.getInstance().preView.findViewById(R.id.song_button);
                         prevLayout = UserConfig.getInstance().preView.findViewById(R.id.song_layout);
@@ -177,15 +191,16 @@ public class MusicFragment extends Fragment {
 
                     prevImageView.setImageResource(0);
                     prevLayout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.zalupa));
-                    prevSong.setPlay_state(0);
+                    */
+                    UserConfig.getInstance().prevSong.setPlay_state(0);
+                    UserConfig.getInstance().songList.get(UserConfig.getInstance().prevPosition).setPlay_state(0);
                 }
 
-                prevPosition = position;
-                prevLayout = layout;
-                prevImageView = ivState;
-                prevSong = selectedSong;
-                SystemClock.sleep(1000);
-                //adapter.notifyDataSetChanged();
+                UserConfig.getInstance().prevPosition = position;
+                UserConfig.getInstance().prevSong = selectedSong;
+                adapter.notifyDataSetChanged();
+                searchAdapter.notifyDataSetChanged();
+
             }
         });
 
@@ -227,17 +242,19 @@ public class MusicFragment extends Fragment {
                         prevPosition = songList.indexOf(s) + 1;
                         playSong(songList.get(position + 1), position + 1, songList);
                         songList.get(position + 1).setPlay_state(1);
-                        adapter.notifyDataSetChanged();
+                        //adapter.notifyDataSetChanged();
                     } else
                     {
                         stopPlayer();
                         s.setPlay_state(0);
-                        adapter.notifyDataSetChanged();
+                        //adapter.notifyDataSetChanged();
                     }
                 }
             });
         } else
             UserConfig.getInstance().player.start();
+        searchAdapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
     }
 
     public void pauseSong() {
