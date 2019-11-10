@@ -18,6 +18,7 @@ public class ProfileFragment extends Fragment {
 
     private ImageView avatarImageView;
     private TextView profileNickname;
+    private TextView textView1, textView2;
 
     @Nullable
     @Override
@@ -31,6 +32,23 @@ public class ProfileFragment extends Fragment {
         // set avatar
         avatarImageView = rootView.findViewById(R.id.avatarImage);
         avatarImageView.setImageResource(R.drawable.avatar_sample);
+
+        textView1 = rootView.findViewById(R.id.textView1);
+        textView2 = rootView.findViewById(R.id.textView2);
+
+        if (UserConfig.getInstance().currentSong != null) {
+            textView1.setVisibility(View.VISIBLE);
+            textView2.setVisibility(View.VISIBLE);
+
+            String songName = UserConfig.getInstance().currentSong.getName();
+            String songArtist = UserConfig.getInstance().currentSong.getArtist();
+
+            textView2.setText(songArtist + " - " + songName);
+        } else
+        {
+            textView1.setVisibility(View.INVISIBLE);
+            textView2.setVisibility(View.INVISIBLE);
+        }
 
         profileNickname = rootView.findViewById(R.id.userNickname);
         profileNickname.setText(UserConfig.getInstance().userName);

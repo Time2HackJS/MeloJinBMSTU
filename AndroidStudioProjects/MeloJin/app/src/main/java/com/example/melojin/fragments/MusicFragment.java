@@ -199,7 +199,7 @@ public class MusicFragment extends Fragment {
                 UserConfig.getInstance().prevPosition = position;
                 UserConfig.getInstance().prevSong = selectedSong;
                 adapter.notifyDataSetChanged();
-                searchAdapter.notifyDataSetChanged();
+                if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
 
             }
         });
@@ -247,14 +247,16 @@ public class MusicFragment extends Fragment {
                     {
                         stopPlayer();
                         s.setPlay_state(0);
-                        //adapter.notifyDataSetChanged();
+                        adapter.notifyDataSetChanged();
+                        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
                     }
                 }
             });
         } else
             UserConfig.getInstance().player.start();
-        searchAdapter.notifyDataSetChanged();
+        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
         adapter.notifyDataSetChanged();
+        UserConfig.getInstance().currentSong = s;
     }
 
     public void pauseSong() {
@@ -265,6 +267,7 @@ public class MusicFragment extends Fragment {
 
     public void stopSong() {
         stopPlayer();
+        UserConfig.getInstance().currentSong = null;
     }
 
     private void stopPlayer() {
@@ -272,6 +275,7 @@ public class MusicFragment extends Fragment {
             UserConfig.getInstance().player.release();
             UserConfig.getInstance().player = null;
         }
+        UserConfig.getInstance().currentSong = null;
     }
 
     public ArrayList<Song> filterList(String str) {
