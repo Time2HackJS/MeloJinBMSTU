@@ -18,10 +18,8 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.LiveData;
 
 import com.example.melojin.R;
 import com.example.melojin.classes.IPlayer;
@@ -141,7 +139,6 @@ public class MusicFragment extends Fragment implements IPlayer {
         songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 setOnClickEvent(parent, view, position, id);
             }
         });
@@ -268,7 +265,6 @@ public class MusicFragment extends Fragment implements IPlayer {
                 }
             }
         }).start();
-
     }
 
     public void stopSong() {
