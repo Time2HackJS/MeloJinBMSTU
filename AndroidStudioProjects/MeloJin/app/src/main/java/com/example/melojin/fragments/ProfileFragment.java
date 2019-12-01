@@ -51,7 +51,7 @@ public class ProfileFragment extends Fragment {
         }
 
         profileNickname = rootView.findViewById(R.id.userNickname);
-        profileNickname.setText(UserConfig.getInstance().userName);
+        profileNickname.setText(UserConfig.getInstance().currentUser.name);
 
         return rootView;
     }

@@ -20,6 +20,9 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+
 public class RegisterActivity extends AppCompatActivity {
 
     EditText emailET, passwordET, nicknameET;
@@ -79,7 +82,16 @@ public class RegisterActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
-                                        User user = new User(nickname, email);
+                                        ArrayList<String> friends = new ArrayList<>();
+                                        friends.add("pupa");
+                                        friends.add("lupa");
+
+                                        ArrayList<String> savedSongs = new ArrayList<>();
+                                        savedSongs.add("1");
+                                        savedSongs.add("3");
+                                        savedSongs.add("4");
+
+                                        User user = new User(nickname, email, friends, savedSongs, "");
                                         FirebaseDatabase.getInstance().getReference("users")
                                                 .child(mFirebaseAuth.getCurrentUser().getUid())
                                                 .setValue(user);

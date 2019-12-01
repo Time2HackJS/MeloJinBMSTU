@@ -14,17 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.example.melojin.R;
 
-import com.example.melojin.classes.UserConfig;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -73,24 +67,6 @@ public class LoginActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser mFirebaseUser = mFirebaseAuth.getCurrentUser();
                 if (mFirebaseUser != null) {
-
-                    DatabaseReference user = FirebaseDatabase.getInstance().getReference("users").child(mFirebaseUser.getUid());
-                        user.addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                String name = dataSnapshot.child("name").getValue(String.class);
-                                String email = dataSnapshot.child("email").getValue(String.class);
-
-                                UserConfig.getInstance().userName = name;
-                                UserConfig.getInstance().userEmail = email;
-
-                                Log.i(TAG, "GOT " + name + " AND " + email);
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {}
-                        });
-
                     Intent i = new Intent(LoginActivity.this, SliderActivity.class);
                     startActivity(i);
                 }

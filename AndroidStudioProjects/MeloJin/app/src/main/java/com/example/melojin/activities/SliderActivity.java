@@ -16,11 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.melojin.classes.Song;
+import com.example.melojin.classes.User;
 import com.example.melojin.classes.UserConfig;
 import com.example.melojin.fragments.MusicFragment;
 import com.example.melojin.fragments.ProfileFragment;
 
 import com.example.melojin.R;
+import com.example.melojin.fragments.UsersFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,6 +32,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
 
 public class SliderActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private DrawerLayout mDrawer;
@@ -59,16 +63,26 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String name = dataSnapshot.child("name").getValue(String.class);
                 String email = dataSnapshot.child("email").getValue(String.class);
+                String currentSong = dataSnapshot.child("current_song").getValue(String.class);
 
-                UserConfig.getInstance().userName = name;
-                UserConfig.getInstance().userEmail = email;
+                for (DataSnapshot postSnapshot : dataSnapshot.child("friends").getChildren()) {
+                    UserConfig.getInstance().currentUser.friends.add(postSnapshot.getValue(String.class));
+                }
+
+                for (DataSnapshot postSnapshot : dataSnapshot.child("songs").getChildren()) {
+                    UserConfig.getInstance().currentUser.songs.add(postSnapshot.getValue(String.class));
+                }
+
+                UserConfig.getInstance().currentUser.name = name;
+                UserConfig.getInstance().currentUser.email = email;
+                UserConfig.getInstance().currentUser.current_song = currentSong;
 
                 NavigationView navigationView = findViewById(R.id.nav_view);
                 View headerView = navigationView.getHeaderView(0);
                 TextView navUsername = headerView.findViewById(R.id.navUsername);
                 TextView navEmail = headerView.findViewById(R.id.navEmail);
-                navUsername.setText(UserConfig.getInstance().userName);
-                navEmail.setText(UserConfig.getInstance().userEmail);
+                navUsername.setText(UserConfig.getInstance().currentUser.name);
+                navEmail.setText(UserConfig.getInstance().currentUser.email);
             }
 
             @Override
@@ -76,6 +90,48 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
 
             }
         });
+
+        if (UserConfig.getInstance().users.isEmpty()) {
+            databaseReference = FirebaseDatabase.getInstance().getReference("users");
+            databaseReference.addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    User value = dataSnapshot.getValue(User.class);
+
+                    if (!value.email.equals(mFirebaseAuth.getCurrentUser().getEmail())) {
+                        UserConfig.getInstance().users.add(value);
+                        Log.i("LISTADD", value.email);
+                    } else
+                        UserConfig.getInstance().currentUser = value;
+                }
+
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    User value = dataSnapshot.getValue(User.class);
+                    for (User u : UserConfig.getInstance().users) {
+                        if (u.email.equals(value.email)) {
+                            int position = UserConfig.getInstance().users.indexOf(u);
+                            UserConfig.getInstance().users.set(position, value);
+                        }
+                    }
+                }
+
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
 
         // change header Email and Nickname
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -104,6 +160,16 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
             case R.id.nav_profile:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         new ProfileFragment()).commit();
+                break;
+
+            case R.id.nav_allmusic:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        new MusicFragment()).commit();
+                break;
+
+            case R.id.nav_allusers:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        new UsersFragment()).commit();
                 break;
 
             case R.id.nav_music:

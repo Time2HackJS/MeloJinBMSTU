@@ -17,9 +17,11 @@ public class UserConfig {
         return instance;
     }
 
-    public String userName;
-    public String userEmail;
+    public User currentUser = new User();
     public ArrayList<Song> songList = new ArrayList<>();
+    public ArrayList<Song> savedSongs = new ArrayList<>();
+    public ArrayList<User> users = new ArrayList<>();
+    public Song clickedSong;
     public Integer prevPosition;
     public View preView;
     public MediaPlayer player;

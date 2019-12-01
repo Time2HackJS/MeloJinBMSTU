@@ -20,12 +20,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.LiveData;
 
 import com.example.melojin.R;
+import com.example.melojin.classes.IPlayer;
 import com.example.melojin.classes.Song;
 import com.example.melojin.classes.SongListAdapter;
 import com.example.melojin.classes.UserConfig;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -37,7 +41,7 @@ import com.google.firebase.storage.StorageReference;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MusicFragment extends Fragment {
+public class MusicFragment extends Fragment implements IPlayer {
 
     private Integer prevPosition = -1;
     private ImageView prevImageView;
@@ -49,12 +53,7 @@ public class MusicFragment extends Fragment {
     private SongListAdapter adapter;
     private SongListAdapter searchAdapter;
     DatabaseReference databaseReference;
-
-    public static MusicFragment newInstance() {
-        MusicFragment musicFragment = new MusicFragment();
-
-        return musicFragment;
-    }
+    FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
 
     @Nullable
     @Override
@@ -106,7 +105,6 @@ public class MusicFragment extends Fragment {
         });
 
         if (UserConfig.getInstance().songList.isEmpty()) {
-            Log.i("FUCK", "YAY");
             // read music tracks from FirebaseDatabase
             databaseReference = FirebaseDatabase.getInstance().getReference("songs");
             databaseReference.addChildEventListener(new ChildEventListener() {
@@ -144,125 +142,133 @@ public class MusicFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                // Get the selected item
-                Song selectedSong = (Song) parent.getItemAtPosition(position);
-                UserConfig.getInstance().currentSong = selectedSong;
+                setOnClickEvent(parent, view, position, id);
+            }
+        });
 
-                if (selectedSong.getPlay_state() == 0) {
-                    stopSong();
-                    if (etSearch.getText().toString().isEmpty())
-                        playSong(selectedSong, position, UserConfig.getInstance().songList);
-                    else
-                        playSong(selectedSong, position, filterList(etSearch.getText().toString()));
-                    selectedSong.setPlay_state(1);
-                    SystemClock.sleep(1000);
-                    /*
-                    selectedSong.setPlay_state(1);
-                    ivState.setImageResource(R.drawable.song_pause);
-                    layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
-                     */
-                } else if (selectedSong.getPlay_state() == 2) {
-                    if (etSearch.getText().toString().isEmpty())
-                        playSong(selectedSong, position, UserConfig.getInstance().songList);
-                    else
-                        playSong(selectedSong, position, filterList(etSearch.getText().toString()));
-                    selectedSong.setPlay_state(1);
-                    /*
-                    ivState.setImageResource(R.drawable.song_pause);
-                    layout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.songSelectBackground));
-                    */
-                } else {
-                    pauseSong();
-                    selectedSong.setPlay_state(2);
-                    /*
-                    selectedSong.setPlay_state(2);
-                    ivState.setImageResource(R.drawable.song_play);
-                     */
-                }
+        songListView.setLongClickable(true);
+        songListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+                UserConfig.getInstance().clickedSong = UserConfig.getInstance().songList.get(position);
 
-                if (UserConfig.getInstance().prevPosition == null) UserConfig.getInstance().prevPosition = position;
+                FragmentManager fragmentManager = getFragmentManager();
+                fragmentManager.beginTransaction().setCustomAnimations(R.anim.enter_right_to_left, R.anim.exit_right_to_left,
+                        R.anim.enter_left_to_right, R.anim.exit_left_to_right)
+                        .replace(R.id.fragment_container, new SongFragment()).addToBackStack(null).commit();
 
-                if (UserConfig.getInstance().prevPosition != position) {
-                    /*
-                    if (prevPosition == UserConfig.getInstance().prevPosition) {
-                        prevImageView = UserConfig.getInstance().preView.findViewById(R.id.song_button);
-                        prevLayout = UserConfig.getInstance().preView.findViewById(R.id.song_layout);
-                    }
-
-                    prevImageView.setImageResource(0);
-                    prevLayout.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.zalupa));
-                    */
-                    UserConfig.getInstance().prevSong.setPlay_state(0);
-                    UserConfig.getInstance().songList.get(UserConfig.getInstance().prevPosition).setPlay_state(0);
-                }
-
-                UserConfig.getInstance().prevPosition = position;
-                UserConfig.getInstance().prevSong = selectedSong;
-                adapter.notifyDataSetChanged();
-                if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
-
+                return true;
             }
         });
 
         return rootView;
     }
 
-    private void playSong(final Song s, final int position, final ArrayList<Song> songList) {
-        if (UserConfig.getInstance().player == null) {
-            UserConfig.getInstance().player = new MediaPlayer();
-            StorageReference storageReference = FirebaseStorage.getInstance().getReference();
-            storageReference.child("songs/song_" + s.getSong_id() + ".mp3").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-                    try {
-                        UserConfig.getInstance().player.setDataSource(uri.toString());
+    public void playSong(final Song s, final int position, final ArrayList<Song> songList) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-                        UserConfig.getInstance().player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                            @Override
-                            public void onPrepared(MediaPlayer mediaPlayer) {
-                                mediaPlayer.start();
-                            }
-                        });
-
-                        UserConfig.getInstance().player.prepareAsync();
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                });
+
+                if (UserConfig.getInstance().player == null) {
+                    UserConfig.getInstance().player = new MediaPlayer();
+                    StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+                    storageReference.child("songs/song_" + s.getSong_id() + ".mp3").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            try {
+                                UserConfig.getInstance().player.setDataSource(uri.toString());
+
+                                UserConfig.getInstance().player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                    @Override
+                                    public void onPrepared(MediaPlayer mediaPlayer) {
+                                        mediaPlayer.start();
+                                        FirebaseDatabase.getInstance().getReference("users")
+                                                .child(mFirebaseAuth.getCurrentUser().getUid())
+                                                .child("current_song")
+                                                .setValue(s.getArtist() + " - " + s.getName());
+
+                                        songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                            @Override
+                                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                                setOnClickEvent(adapterView, view, i, l);
+                                            }
+                                        });
+                                    }
+                                });
+
+                                UserConfig.getInstance().player.prepareAsync();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    UserConfig.getInstance().player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mediaPlayer) {
+                            if (position != songList.size() - 1) {
+                                stopPlayer();
+                                s.setPlay_state(0);
+                                prevSong = songList.get(position + 1);
+
+                                prevPosition = songList.indexOf(s) + 1;
+                                playSong(songList.get(position + 1), position + 1, songList);
+                                songList.get(position + 1).setPlay_state(1);
+                                //adapter.notifyDataSetChanged();
+                            } else
+                            {
+                                stopPlayer();
+                                s.setPlay_state(0);
+
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        adapter.notifyDataSetChanged();
+                                        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    songListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                            setOnClickEvent(adapterView, view, i, l);
+                        }
+                    });
+                    UserConfig.getInstance().player.start();
                 }
-            });
 
-            UserConfig.getInstance().player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mediaPlayer) {
-                    if (position != songList.size() - 1) {
-                        stopPlayer();
-                        s.setPlay_state(0);
-                        prevSong = songList.get(position + 1);
-
-                        prevPosition = songList.indexOf(s) + 1;
-                        playSong(songList.get(position + 1), position + 1, songList);
-                        songList.get(position + 1).setPlay_state(1);
-                        //adapter.notifyDataSetChanged();
-                    } else
-                    {
-                        stopPlayer();
-                        s.setPlay_state(0);
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
                         adapter.notifyDataSetChanged();
                         if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
                     }
-                }
-            });
-        } else
-            UserConfig.getInstance().player.start();
-        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
-        adapter.notifyDataSetChanged();
-        UserConfig.getInstance().currentSong = s;
+                });
+
+                UserConfig.getInstance().currentSong = s;
+            }
+        }).start();
     }
 
     public void pauseSong() {
-        if (UserConfig.getInstance().player != null) {
-            UserConfig.getInstance().player.pause();
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (UserConfig.getInstance().player != null) {
+                    UserConfig.getInstance().player.pause();
+                }
+            }
+        }).start();
+
     }
 
     public void stopSong() {
@@ -270,7 +276,7 @@ public class MusicFragment extends Fragment {
         UserConfig.getInstance().currentSong = null;
     }
 
-    private void stopPlayer() {
+    public void stopPlayer() {
         if (UserConfig.getInstance().player != null) {
             UserConfig.getInstance().player.release();
             UserConfig.getInstance().player = null;
@@ -288,4 +294,46 @@ public class MusicFragment extends Fragment {
 
         return filteredList;
     }
+
+    public void setOnClickEvent(AdapterView<?> parent, View view, int position, long id) {
+        Song selectedSong = (Song) parent.getItemAtPosition(position);
+        UserConfig.getInstance().currentSong = selectedSong;
+
+        if (selectedSong.getPlay_state() == 0) {
+
+            stopSong();
+            if (etSearch.getText().toString().isEmpty())
+                playSong(selectedSong, position, UserConfig.getInstance().songList);
+            else
+                playSong(selectedSong, position, filterList(etSearch.getText().toString()));
+            selectedSong.setPlay_state(1);
+
+        } else if (selectedSong.getPlay_state() == 2) {
+            if (etSearch.getText().toString().isEmpty())
+                playSong(selectedSong, position, UserConfig.getInstance().songList);
+            else
+
+                playSong(selectedSong, position, filterList(etSearch.getText().toString()));
+            selectedSong.setPlay_state(1);
+
+        } else {
+
+            pauseSong();
+            selectedSong.setPlay_state(2);
+
+        }
+
+        if (UserConfig.getInstance().prevPosition == null) UserConfig.getInstance().prevPosition = position;
+
+        if (UserConfig.getInstance().prevPosition != position) {
+            UserConfig.getInstance().prevSong.setPlay_state(0);
+            UserConfig.getInstance().songList.get(UserConfig.getInstance().prevPosition).setPlay_state(0);
+        }
+
+        UserConfig.getInstance().prevPosition = position;
+        UserConfig.getInstance().prevSong = selectedSong;
+        adapter.notifyDataSetChanged();
+        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
+    }
 }
+
