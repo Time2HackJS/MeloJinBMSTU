@@ -201,4 +201,13 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
             super.onBackPressed();
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        FirebaseDatabase.getInstance().getReference("users")
+                .child(mFirebaseAuth.getCurrentUser().getUid())
+                .child("current_song")
+                .setValue("");
+        super.onDestroy();
+    }
 }

@@ -28,4 +28,6 @@ public class UserConfig {
     public Song currentSong;
     public Song prevSong;
     public String searchString;
+    public SongListAdapter adapter;
+    public SongListAdapter searchAdapter;
 }

@@ -66,10 +66,12 @@ public class MusicFragment extends Fragment implements IPlayer {
 
         if (UserConfig.getInstance().searchString == null) {
             songListView.setAdapter(adapter);
+            UserConfig.getInstance().adapter = adapter;
         }
         else {
             searchAdapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, filterList(UserConfig.getInstance().searchString));
             songListView.setAdapter(searchAdapter);
+            UserConfig.getInstance().adapter = searchAdapter;
         }
 
         etSearch = rootView.findViewById(R.id.fieldSearch);

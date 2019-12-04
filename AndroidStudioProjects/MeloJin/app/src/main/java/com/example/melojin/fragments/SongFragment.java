@@ -23,6 +23,7 @@ import com.bumptech.glide.Glide;
 import com.example.melojin.R;
 import com.example.melojin.classes.IPlayer;
 import com.example.melojin.classes.Song;
+import com.example.melojin.classes.User;
 import com.example.melojin.classes.UserConfig;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,18 +53,23 @@ public class SongFragment extends Fragment implements IPlayer {
 
     public Timer timer = new Timer();
     public int duration;
+    public View rootView;
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        timer.cancel();
-        timer = null;
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        final View rootView = inflater.inflate(R.layout.activity_song, container, false);
+        rootView = inflater.inflate(R.layout.activity_song, container, false);
+
+        UserConfig.getInstance().prevSong = UserConfig.getInstance().clickedSong;
 
         /*---  initializing TextView elements  ---*/
         songName = rootView.findViewById(R.id.song_name_des);
@@ -77,6 +83,11 @@ public class SongFragment extends Fragment implements IPlayer {
         buttonNext = rootView.findViewById(R.id.skip_next);
         buttonDelete = rootView.findViewById(R.id.del_song);
         buttonRepeat = rootView.findViewById(R.id.rep_song);
+
+        if (UserConfig.getInstance().clickedSong == UserConfig.getInstance().clickedSong && UserConfig.getInstance().clickedSong.getPlay_state() == 1) {
+            isPlaying = true;
+            buttonPlayPause.setImageResource(R.drawable.ic_pause);
+        }
 
         /*---  initializing ImageView elements  ---*/
         songPoster = rootView.findViewById(R.id.songPoster);
@@ -95,6 +106,29 @@ public class SongFragment extends Fragment implements IPlayer {
             songEndTime.setVisibility(View.INVISIBLE);
             seekBar.setVisibility(View.INVISIBLE);
             buttonRepeat.setVisibility(View.INVISIBLE);
+            buttonNext.setVisibility(View.INVISIBLE);
+            buttonPrev.setVisibility(View.INVISIBLE);
+
+            buttonPlayPause.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    songCurTime.setVisibility(View.VISIBLE);
+                    songEndTime.setVisibility(View.VISIBLE);
+                    seekBar.setVisibility(View.VISIBLE);
+                    buttonRepeat.setVisibility(View.VISIBLE);
+                    buttonNext.setVisibility(View.VISIBLE);
+                    buttonPrev.setVisibility(View.VISIBLE);
+
+                    if (UserConfig.getInstance().player != null) {
+                        stopSong();
+                        for (Song s : UserConfig.getInstance().songList)
+                            s.setPlay_state(0);
+                    }
+
+                    setOnClickEvent();
+                    isPlaying = false;
+                }
+            });
 
         } else                                                                                       // if this is current song
         {
@@ -102,67 +136,21 @@ public class SongFragment extends Fragment implements IPlayer {
             songEndTime.setVisibility(View.VISIBLE);
             seekBar.setVisibility(View.VISIBLE);
             buttonRepeat.setVisibility(View.VISIBLE);
+            buttonNext.setVisibility(View.VISIBLE);
+            buttonPrev.setVisibility(View.VISIBLE);
 
-            timer.schedule(new MyTimerTask(), 1000, 1000);
-
-            songLength = UserConfig.getInstance().player.getDuration();
-            songPosition = UserConfig.getInstance().player.getCurrentPosition();
-
-            int durMinutes = (songPosition / 1000) / 60;
-            int durSeconds = (songPosition / 1000) % 60;
-
-            String middleThing;
-            if (durSeconds < 10)
-                middleThing = ":0";
-            else
-                middleThing = ":";
-
-            songCurTime.setText(durMinutes + middleThing + durSeconds);
-            Log.i("SONG CHECK", (durMinutes + middleThing + durSeconds));
-
-
-            songEndTime.setText((songLength / 1000) / 60 + ":" + (songLength / 1000) % 60);
-
-            /*---  setting SeekBar element  ---*/
-            seekBar.setProgress(0);
-            seekBar.setMax(songLength);
-            seekBar.setProgress(songPosition);
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            buttonPlayPause.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        String betweenStr;
-                        int durMinutes = (progress / 1000) / 60;
-                        int durSeconds = (progress / 1000) % 60;
-
-                        if (durSeconds < 10)
-                            betweenStr = ":0";
-                        else
-                            betweenStr = ":";
-
-                        songCurTime.setText(durMinutes + betweenStr + durSeconds);
-
-                        Log.i("JAJAJA", "YES");
-
-                        UserConfig.getInstance().player.seekTo(progress);
-                    }
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                    if (UserConfig.getInstance().player.isPlaying())
-                    {
-                        playedOnClick = true;
-                        UserConfig.getInstance().player.pause();
-                    }
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    if (playedOnClick)
-                        UserConfig.getInstance().player.start();
+                public void onClick(View view) {
+                    setOnClickEvent();
                 }
             });
+
+            endTimeEvent();
+
+            /*---  setting SeekBar element  ---*/
+
+            seekbarEvent();
         }
 
         /*---  setting ImageView elements  ---*/
@@ -175,27 +163,96 @@ public class SongFragment extends Fragment implements IPlayer {
         });
 
         /*---  setting ImageButton elements  ---*/
-        buttonPlayPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setOnClickEvent();
-            }
-        });
+        if (UserConfig.getInstance().player.isLooping())
+        {
+            isRepeating = true;
+            buttonRepeat.setImageResource(R.drawable.ic_loop_active);
+        }
 
         buttonRepeat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (isRepeating) {
-                    UserConfig.getInstance().player.setLooping(false);
+                    isRepeating = false;
+                    UserConfig.getInstance().player.setLooping(isRepeating);
                     buttonRepeat.setImageResource(R.drawable.ic_loop);
-                }
-                else
-                {
-                    UserConfig.getInstance().player.setLooping(true);
+                } else {
+                    isRepeating = true;
+                    UserConfig.getInstance().player.setLooping(isRepeating);
                     buttonRepeat.setImageResource(R.drawable.ic_loop_active);
                 }
             }
         });
+
+        buttonNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                UserConfig.getInstance().player.seekTo(UserConfig.getInstance().player.getDuration());
+            }
+        });
+
+        buttonPrev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                prevClickEvent();
+            }
+        });
+
+        if (UserConfig.getInstance().player != null && UserConfig.getInstance().currentSong == UserConfig.getInstance().clickedSong) {
+            UserConfig.getInstance().player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    ArrayList<Song> songList = UserConfig.getInstance().songList;
+                    Song s = UserConfig.getInstance().currentSong;
+                    int position = songList.indexOf(s);
+
+                    if (position != songList.size() - 1) {
+                        stopPlayer();
+                        s.setPlay_state(0);
+                        prevSong = songList.get(position + 1);
+
+                        prevPosition = songList.indexOf(s) + 1;
+                        playSong(songList.get(position + 1), position + 1, songList);
+                        songList.get(position + 1).setPlay_state(1);
+                        UserConfig.getInstance().adapter.notifyDataSetChanged();
+
+                        if (timer != null) {
+                            timer.cancel();
+                            timer = null;
+                        }
+
+                        songName.setText(prevSong.getName());
+                        songArtist.setText(prevSong.getArtist());
+                        isPlaying = true;
+
+                        UserConfig.getInstance().clickedSong = prevSong;
+                        UserConfig.getInstance().currentSong = prevSong;
+                        UserConfig.getInstance().prevSong = s;
+
+                        seekBar.setProgress(0);
+
+                        StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+                        storageReference.child("posters/" + UserConfig.getInstance().clickedSong.getSong_id() + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                Glide.with(rootView.getContext()).load(uri).into(songPoster);
+                            }
+                        });
+                    } else {
+                        stopPlayer();
+                        s.setPlay_state(0);
+                        UserConfig.getInstance().adapter.notifyDataSetChanged();
+
+                        if (timer != null) {
+                            timer.cancel();
+                            timer = null;
+                        }
+
+                        getFragmentManager().popBackStack();
+                    }
+                }
+            });
+        }
 
         return rootView;
     }
@@ -203,29 +260,26 @@ public class SongFragment extends Fragment implements IPlayer {
     private class MyTimerTask extends TimerTask {
         @Override
         public void run() {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    duration = UserConfig.getInstance().player.getCurrentPosition();
 
-                    int durMinutes = (duration / 1000) / 60;
-                    int durSeconds = (duration / 1000) % 60;
+            duration = UserConfig.getInstance().player.getCurrentPosition();
+
+            int durMinutes = (duration / 1000) / 60;
+            int durSeconds = (duration / 1000) % 60;
 
 
-                    String middleThing;
-                    if (durSeconds < 10)
-                        middleThing = ":0";
-                    else
-                        middleThing = ":";
+            String middleThing;
+            if (durSeconds < 10)
+                middleThing = ":0";
+            else
+                middleThing = ":";
 
-                    String curTime = durMinutes + middleThing + durSeconds;
+            String curTime = durMinutes + middleThing + durSeconds;
 
-                    Log.i("HOHO HAHAA", curTime);
-                    songCurTime.setText(curTime);
+            Log.i("HOHO HAHAA", curTime);
+            songCurTime.setText(curTime);
 
-                    seekBar.setProgress(duration);
-                }
-            });
+            seekBar.setProgress(duration);
+
         }
     }
 
@@ -236,6 +290,20 @@ public class SongFragment extends Fragment implements IPlayer {
                 if (UserConfig.getInstance().player == null) {
 
                     buttonPlayPause.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                        }
+                    });
+
+                    buttonNext.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                        }
+                    });
+
+                    buttonPrev.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
 
@@ -265,6 +333,27 @@ public class SongFragment extends Fragment implements IPlayer {
                                                 setOnClickEvent();
                                             }
                                         });
+
+                                        buttonNext.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                UserConfig.getInstance().player.seekTo(UserConfig.getInstance().player.getDuration());
+                                            }
+                                        });
+
+                                        buttonPrev.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                prevClickEvent();
+                                            }
+                                        });
+
+                                        seekbarEvent();
+                                        if (timer == null) {
+                                            timer = new Timer();
+                                        }
+                                        endTimeEvent();
+
                                     }
                                 });
 
@@ -286,11 +375,40 @@ public class SongFragment extends Fragment implements IPlayer {
                                 prevPosition = songList.indexOf(s) + 1;
                                 playSong(songList.get(position + 1), position + 1, songList);
                                 songList.get(position + 1).setPlay_state(1);
-                                //adapter.notifyDataSetChanged();
-                            } else
-                            {
+                                UserConfig.getInstance().adapter.notifyDataSetChanged();
+
+                                if (timer != null) {
+                                    timer.cancel();
+                                    timer = null;
+                                }
+
+                                songName.setText(prevSong.getName());
+                                songArtist.setText(prevSong.getArtist());
+                                isPlaying = true;
+
+                                UserConfig.getInstance().clickedSong = prevSong;
+                                UserConfig.getInstance().currentSong = prevSong;
+                                UserConfig.getInstance().prevSong = s;
+
+                                seekBar.setProgress(0);
+
+                                StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+                                storageReference.child("posters/" + UserConfig.getInstance().clickedSong.getSong_id() + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        Glide.with(rootView.getContext()).load(uri).into(songPoster);
+                                    }
+                                });
+                            } else {
                                 stopPlayer();
                                 s.setPlay_state(0);
+                                UserConfig.getInstance().adapter.notifyDataSetChanged();
+                                getFragmentManager().popBackStack();
+
+                                if (timer != null) {
+                                    timer.cancel();
+                                    timer = null;
+                                }
                             }
                         }
                     });
@@ -301,6 +419,21 @@ public class SongFragment extends Fragment implements IPlayer {
                             setOnClickEvent();
                         }
                     });
+
+                    buttonPrev.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            prevClickEvent();
+                        }
+                    });
+
+                    buttonNext.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            UserConfig.getInstance().player.seekTo(UserConfig.getInstance().player.getDuration());
+                        }
+                    });
+
                     UserConfig.getInstance().player.start();
                 }
                 UserConfig.getInstance().currentSong = s;
@@ -333,18 +466,130 @@ public class SongFragment extends Fragment implements IPlayer {
     }
 
     public void setOnClickEvent() {
+
         if (isPlaying) {
             buttonPlayPause.setImageResource(R.drawable.ic_play_arrow);
             isPlaying = false;
             UserConfig.getInstance().player.pause();
-        }
-        else
-        {
+            UserConfig.getInstance().clickedSong.setPlay_state(2);
+        } else {
             buttonPlayPause.setImageResource(R.drawable.ic_pause);
             isPlaying = true;
             playSong(UserConfig.getInstance().clickedSong,
                     UserConfig.getInstance().songList.indexOf(UserConfig.getInstance().clickedSong),
                     UserConfig.getInstance().songList);
+            UserConfig.getInstance().clickedSong.setPlay_state(1);
+        }
+    }
+
+    public void seekbarEvent() {
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    String betweenStr;
+                    int durMinutes = (progress / 1000) / 60;
+                    int durSeconds = (progress / 1000) % 60;
+
+                    if (durSeconds < 10)
+                        betweenStr = ":0";
+                    else
+                        betweenStr = ":";
+
+                    songCurTime.setText(durMinutes + betweenStr + durSeconds);
+
+                    Log.i("JAJAJA", "YES");
+
+                    UserConfig.getInstance().player.seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                if (UserConfig.getInstance().player.isPlaying()) {
+                    playedOnClick = true;
+                    UserConfig.getInstance().player.pause();
+                }
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (playedOnClick)
+                    UserConfig.getInstance().player.start();
+            }
+        });
+    }
+
+    public void endTimeEvent() {
+        timer.schedule(new MyTimerTask(), 1000, 1000);
+
+        songLength = UserConfig.getInstance().player.getDuration();
+        songPosition = UserConfig.getInstance().player.getCurrentPosition();
+
+        seekBar.setProgress(0);
+        seekBar.setMax(songLength);
+        seekBar.setProgress(songPosition);
+
+        int durMinutes = (songPosition / 1000) / 60;
+        int durSeconds = (songPosition / 1000) % 60;
+
+        String middleThing;
+        if (durSeconds < 10)
+            middleThing = ":0";
+        else
+            middleThing = ":";
+
+        songCurTime.setText(durMinutes + middleThing + durSeconds);
+        Log.i("SONG CHECK", (durMinutes + middleThing + durSeconds));
+
+
+        if ((songLength / 1000) % 60 < 10)
+            middleThing = ":0";
+        else
+            middleThing = ":";
+
+        songEndTime.setText((songLength / 1000) / 60 + middleThing + (songLength / 1000) % 60);
+    }
+
+    public void prevClickEvent() {
+        ArrayList<Song> songList = UserConfig.getInstance().songList;
+        Song currentSong = UserConfig.getInstance().currentSong;
+        int prevSongPosition = songList.indexOf(currentSong) - 1;
+
+        if (prevSongPosition != -1)
+        {
+            Song prevSong = songList.get(prevSongPosition);
+            stopSong();
+            playSong(prevSong, prevSongPosition, songList);
+
+            UserConfig.getInstance().prevSong = prevSong;
+
+            UserConfig.getInstance().clickedSong = prevSong;
+            UserConfig.getInstance().currentSong = prevSong;
+
+            StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+            storageReference.child("posters/" + UserConfig.getInstance().clickedSong.getSong_id() + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                @Override
+                public void onSuccess(Uri uri) {
+                    Glide.with(rootView.getContext()).load(uri).into(songPoster);
+                }
+            });
+
+            songName.setText(prevSong.getName());
+            songArtist.setText(prevSong.getArtist());
+
+            currentSong.setPlay_state(0);
+            prevSong.setPlay_state(1);
+
+            isPlaying = true;
+            buttonPlayPause.setImageResource(R.drawable.ic_pause);
+
+            timer.cancel();
+            timer = null;
+
+            buttonRepeat.setImageResource(R.drawable.ic_loop);
+
+            seekbarEvent();
         }
     }
 }
