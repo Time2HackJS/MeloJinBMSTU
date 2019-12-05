@@ -18,7 +18,9 @@ import android.widget.Toast;
 import com.example.melojin.classes.Song;
 import com.example.melojin.classes.User;
 import com.example.melojin.classes.UserConfig;
+import com.example.melojin.fragments.FriendsFragment;
 import com.example.melojin.fragments.MusicFragment;
+import com.example.melojin.fragments.MusicGlobalFragment;
 import com.example.melojin.fragments.ProfileFragment;
 
 import com.example.melojin.R;
@@ -66,11 +68,13 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
                 String currentSong = dataSnapshot.child("current_song").getValue(String.class);
 
                 for (DataSnapshot postSnapshot : dataSnapshot.child("friends").getChildren()) {
-                    UserConfig.getInstance().currentUser.friends.add(postSnapshot.getValue(String.class));
+                    if (!UserConfig.getInstance().currentUser.friends.contains((postSnapshot.getValue(String.class))))
+                        UserConfig.getInstance().currentUser.friends.add(postSnapshot.getValue(String.class));
                 }
 
                 for (DataSnapshot postSnapshot : dataSnapshot.child("songs").getChildren()) {
-                    UserConfig.getInstance().currentUser.songs.add(postSnapshot.getValue(String.class));
+                    if (!UserConfig.getInstance().currentUser.songs.contains(postSnapshot.getValue(String.class)))
+                        UserConfig.getInstance().currentUser.songs.add(postSnapshot.getValue(String.class));
                 }
 
                 UserConfig.getInstance().currentUser.name = name;
@@ -101,6 +105,12 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
                     if (!value.email.equals(mFirebaseAuth.getCurrentUser().getEmail())) {
                         UserConfig.getInstance().users.add(value);
                         Log.i("LISTADD", value.email);
+
+                        if (UserConfig.getInstance().currentUser.friends.contains(value.email)) {
+                            UserConfig.getInstance().currentUser.friendList.add(value);
+                            Log.i("FRIENDSCHECK", value.email);
+                        }
+
                     } else
                         UserConfig.getInstance().currentUser = value;
                 }
@@ -112,6 +122,7 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
                         if (u.email.equals(value.email)) {
                             int position = UserConfig.getInstance().users.indexOf(u);
                             UserConfig.getInstance().users.set(position, value);
+
                         }
                     }
                 }
@@ -158,13 +169,14 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
         // handling navigation view item clicks
         switch (item.getItemId()) {
             case R.id.nav_profile:
+                UserConfig.getInstance().clickedUser = UserConfig.getInstance().currentUser;
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         new ProfileFragment()).commit();
                 break;
 
             case R.id.nav_allmusic:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        new MusicFragment()).commit();
+                        new MusicGlobalFragment()).commit();
                 break;
 
             case R.id.nav_allusers:
@@ -178,13 +190,20 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
                 break;
 
             case R.id.nav_friends:
-
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        new FriendsFragment()).commit();
                 break;
 
             case R.id.nav_logout:
                 Toast.makeText(this, "Successfuly logged out!", Toast.LENGTH_SHORT).show();
                 FirebaseAuth.getInstance().signOut();
                 Intent intToLogin = new Intent(SliderActivity.this, LoginActivity.class);
+
+                FirebaseDatabase.getInstance().getReference("users")
+                        .child(mFirebaseAuth.getCurrentUser().getUid())
+                        .child("current_song")
+                        .setValue("");
+
                 startActivity(intToLogin);
                 break;
         }
@@ -200,6 +219,30 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        FirebaseDatabase.getInstance().getReference("users")
+                .child(mFirebaseAuth.getCurrentUser().getUid())
+                .child("current_song")
+                .setValue("");
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        if (UserConfig.getInstance().currentSong != null) {
+            String songName, songArtist;
+            songName = UserConfig.getInstance().currentSong.getName();
+            songArtist = UserConfig.getInstance().currentSong.getArtist();
+            FirebaseDatabase.getInstance().getReference("users")
+                    .child(mFirebaseAuth.getCurrentUser().getUid())
+                    .child("current_song")
+                    .setValue(songArtist + " - " + songName);
+        }
+
+        super.onResume();
     }
 
     @Override

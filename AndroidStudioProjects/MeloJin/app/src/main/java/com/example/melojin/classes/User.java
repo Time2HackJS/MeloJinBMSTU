@@ -6,6 +6,7 @@ public class User {
     public String name, email, current_song;
     public ArrayList<String> friends = new ArrayList<>();
     public ArrayList<String> songs = new ArrayList<>();
+    public ArrayList<User> friendList = new ArrayList<>();
 
     public User() {}
 

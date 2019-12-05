@@ -62,7 +62,7 @@ public class MusicFragment extends Fragment implements IPlayer {
 
         // adapter
         songListView = rootView.findViewById(R.id.listView);
-        adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, UserConfig.getInstance().songList);
+        adapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout,  UserConfig.getInstance().savedSongList);
 
         if (UserConfig.getInstance().searchString == null) {
             songListView.setAdapter(adapter);
@@ -100,6 +100,7 @@ public class MusicFragment extends Fragment implements IPlayer {
                     UserConfig.getInstance().searchString = etSearch.getText().toString();
                     searchAdapter = new SongListAdapter(getActivity(), R.layout.adapter_view_layout, filterList(UserConfig.getInstance().searchString));
                     songListView.setAdapter(searchAdapter);
+                    UserConfig.getInstance().adapter = searchAdapter;
                 }
             }
         });
@@ -112,6 +113,9 @@ public class MusicFragment extends Fragment implements IPlayer {
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                     Song value = dataSnapshot.getValue(Song.class);
                     UserConfig.getInstance().songList.add(value);
+
+                    if (UserConfig.getInstance().currentUser.songs.contains(value.getSong_id()))
+                        UserConfig.getInstance().savedSongList.add(value);
 
                     adapter.notifyDataSetChanged();
                 }
@@ -149,7 +153,7 @@ public class MusicFragment extends Fragment implements IPlayer {
         songListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
-                UserConfig.getInstance().clickedSong = UserConfig.getInstance().songList.get(position);
+                UserConfig.getInstance().clickedSong = (Song) adapterView.getItemAtPosition(position);
 
                 FragmentManager fragmentManager = getFragmentManager();
                 fragmentManager.beginTransaction().setCustomAnimations(R.anim.enter_right_to_left, R.anim.exit_right_to_left,
@@ -160,6 +164,8 @@ public class MusicFragment extends Fragment implements IPlayer {
             }
         });
 
+
+        adapter.notifyDataSetChanged();
         return rootView;
     }
 
@@ -245,13 +251,15 @@ public class MusicFragment extends Fragment implements IPlayer {
                     UserConfig.getInstance().player.start();
                 }
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        adapter.notifyDataSetChanged();
-                        if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
-                    }
-                });
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapter.notifyDataSetChanged();
+                            if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
 
                 UserConfig.getInstance().currentSong = s;
             }
@@ -285,7 +293,7 @@ public class MusicFragment extends Fragment implements IPlayer {
     public ArrayList<Song> filterList(String str) {
         ArrayList<Song> filteredList = new ArrayList<Song>();
         String searchString;
-        for (Song v : UserConfig.getInstance().songList) {
+        for (Song v :  UserConfig.getInstance().savedSongList) {
             searchString = v.getArtist() + " " + v.getName();
             if (searchString.toLowerCase().contains(str.toLowerCase())) filteredList.add(v);
         }
@@ -301,14 +309,14 @@ public class MusicFragment extends Fragment implements IPlayer {
 
             stopSong();
             if (etSearch.getText().toString().isEmpty())
-                playSong(selectedSong, position, UserConfig.getInstance().songList);
+                playSong(selectedSong, position,  UserConfig.getInstance().savedSongList);
             else
                 playSong(selectedSong, position, filterList(etSearch.getText().toString()));
             selectedSong.setPlay_state(1);
 
         } else if (selectedSong.getPlay_state() == 2) {
             if (etSearch.getText().toString().isEmpty())
-                playSong(selectedSong, position, UserConfig.getInstance().songList);
+                playSong(selectedSong, position,  UserConfig.getInstance().savedSongList);
             else
 
                 playSong(selectedSong, position, filterList(etSearch.getText().toString()));
@@ -325,13 +333,14 @@ public class MusicFragment extends Fragment implements IPlayer {
 
         if (UserConfig.getInstance().prevPosition != position) {
             UserConfig.getInstance().prevSong.setPlay_state(0);
-            UserConfig.getInstance().songList.get(UserConfig.getInstance().prevPosition).setPlay_state(0);
+            UserConfig.getInstance().savedSongList.get(UserConfig.getInstance().prevPosition).setPlay_state(0);
         }
 
         UserConfig.getInstance().prevPosition = position;
         UserConfig.getInstance().prevSong = selectedSong;
         adapter.notifyDataSetChanged();
         if (searchAdapter != null) searchAdapter.notifyDataSetChanged();
+        UserConfig.getInstance().adapter.notifyDataSetChanged();
     }
 }
 

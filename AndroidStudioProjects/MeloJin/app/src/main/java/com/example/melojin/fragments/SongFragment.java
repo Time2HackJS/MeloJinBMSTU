@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,11 +58,11 @@ public class SongFragment extends Fragment implements IPlayer {
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
         if (timer != null) {
             timer.cancel();
             timer = null;
         }
+        super.onDestroyView();
     }
 
     @Nullable
@@ -121,7 +122,7 @@ public class SongFragment extends Fragment implements IPlayer {
 
                     if (UserConfig.getInstance().player != null) {
                         stopSong();
-                        for (Song s : UserConfig.getInstance().songList)
+                        for (Song s :  UserConfig.getInstance().savedSongList)
                             s.setPlay_state(0);
                     }
 
@@ -163,10 +164,20 @@ public class SongFragment extends Fragment implements IPlayer {
         });
 
         /*---  setting ImageButton elements  ---*/
-        if (UserConfig.getInstance().player.isLooping())
-        {
-            isRepeating = true;
-            buttonRepeat.setImageResource(R.drawable.ic_loop_active);
+
+        buttonDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deleteEvent();
+            }
+        });
+
+        if (UserConfig.getInstance().player != null) {
+            if (UserConfig.getInstance().player.isLooping())
+            {
+                isRepeating = true;
+                buttonRepeat.setImageResource(R.drawable.ic_loop_active);
+            }
         }
 
         buttonRepeat.setOnClickListener(new View.OnClickListener() {
@@ -202,9 +213,14 @@ public class SongFragment extends Fragment implements IPlayer {
             UserConfig.getInstance().player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
-                    ArrayList<Song> songList = UserConfig.getInstance().songList;
+                    ArrayList<Song> songList =  UserConfig.getInstance().savedSongList;
                     Song s = UserConfig.getInstance().currentSong;
                     int position = songList.indexOf(s);
+
+                    if (timer != null) {
+                        timer.cancel();
+                        timer = null;
+                    }
 
                     if (position != songList.size() - 1) {
                         stopPlayer();
@@ -216,10 +232,7 @@ public class SongFragment extends Fragment implements IPlayer {
                         songList.get(position + 1).setPlay_state(1);
                         UserConfig.getInstance().adapter.notifyDataSetChanged();
 
-                        if (timer != null) {
-                            timer.cancel();
-                            timer = null;
-                        }
+
 
                         songName.setText(prevSong.getName());
                         songArtist.setText(prevSong.getArtist());
@@ -260,7 +273,6 @@ public class SongFragment extends Fragment implements IPlayer {
     private class MyTimerTask extends TimerTask {
         @Override
         public void run() {
-
             duration = UserConfig.getInstance().player.getCurrentPosition();
 
             int durMinutes = (duration / 1000) / 60;
@@ -279,7 +291,6 @@ public class SongFragment extends Fragment implements IPlayer {
             songCurTime.setText(curTime);
 
             seekBar.setProgress(duration);
-
         }
     }
 
@@ -304,6 +315,13 @@ public class SongFragment extends Fragment implements IPlayer {
                     });
 
                     buttonPrev.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                        }
+                    });
+
+                    buttonDelete.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
 
@@ -348,6 +366,12 @@ public class SongFragment extends Fragment implements IPlayer {
                                             }
                                         });
 
+                                        buttonDelete.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view) {
+                                                deleteEvent();
+                                            }
+                                        });
                                         seekbarEvent();
                                         if (timer == null) {
                                             timer = new Timer();
@@ -403,7 +427,11 @@ public class SongFragment extends Fragment implements IPlayer {
                                 stopPlayer();
                                 s.setPlay_state(0);
                                 UserConfig.getInstance().adapter.notifyDataSetChanged();
-                                getFragmentManager().popBackStack();
+
+                                if (getFragmentManager() != null)
+                                {
+                                    getFragmentManager().popBackStack();
+                                }
 
                                 if (timer != null) {
                                     timer.cancel();
@@ -434,6 +462,13 @@ public class SongFragment extends Fragment implements IPlayer {
                         }
                     });
 
+                    buttonDelete.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            deleteEvent();
+                        }
+                    });
+
                     UserConfig.getInstance().player.start();
                 }
                 UserConfig.getInstance().currentSong = s;
@@ -447,6 +482,11 @@ public class SongFragment extends Fragment implements IPlayer {
             public void run() {
                 if (UserConfig.getInstance().player != null) {
                     UserConfig.getInstance().player.pause();
+
+                    if (timer != null) {
+                        timer.cancel();
+                        timer = null;
+                    }
                 }
             }
         }).start();
@@ -455,6 +495,11 @@ public class SongFragment extends Fragment implements IPlayer {
     public void stopSong() {
         stopPlayer();
         UserConfig.getInstance().currentSong = null;
+
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     public void stopPlayer() {
@@ -463,6 +508,11 @@ public class SongFragment extends Fragment implements IPlayer {
             UserConfig.getInstance().player = null;
         }
         UserConfig.getInstance().currentSong = null;
+
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
     public void setOnClickEvent() {
@@ -476,8 +526,8 @@ public class SongFragment extends Fragment implements IPlayer {
             buttonPlayPause.setImageResource(R.drawable.ic_pause);
             isPlaying = true;
             playSong(UserConfig.getInstance().clickedSong,
-                    UserConfig.getInstance().songList.indexOf(UserConfig.getInstance().clickedSong),
-                    UserConfig.getInstance().songList);
+                    UserConfig.getInstance().savedSongList.indexOf(UserConfig.getInstance().clickedSong),
+                    UserConfig.getInstance().savedSongList);
             UserConfig.getInstance().clickedSong.setPlay_state(1);
         }
     }
@@ -552,7 +602,7 @@ public class SongFragment extends Fragment implements IPlayer {
     }
 
     public void prevClickEvent() {
-        ArrayList<Song> songList = UserConfig.getInstance().songList;
+        ArrayList<Song> songList =  UserConfig.getInstance().savedSongList;
         Song currentSong = UserConfig.getInstance().currentSong;
         int prevSongPosition = songList.indexOf(currentSong) - 1;
 
@@ -584,12 +634,38 @@ public class SongFragment extends Fragment implements IPlayer {
             isPlaying = true;
             buttonPlayPause.setImageResource(R.drawable.ic_pause);
 
-            timer.cancel();
-            timer = null;
+            if (timer != null) {
+                timer.cancel();
+                timer = null;
+            }
 
             buttonRepeat.setImageResource(R.drawable.ic_loop);
 
             seekbarEvent();
         }
     }
+
+    public void deleteEvent() {
+        Song song = UserConfig.getInstance().clickedSong;
+
+        if (UserConfig.getInstance().player != null) {
+            stopSong();
+            stopPlayer();
+        }
+
+        UserConfig.getInstance().savedSongList.remove(song);
+        UserConfig.getInstance().currentUser.songs.remove(song.getSong_id());
+
+        FirebaseDatabase.getInstance().getReference("users")
+                .child(mFirebaseAuth.getCurrentUser().getUid())
+                .child("songs")
+                .setValue(UserConfig.getInstance().currentUser.songs);
+
+        Toast.makeText(getContext(), "You successfuly deleted " + song.getName() + " from your playlist!", Toast.LENGTH_SHORT).show();
+        UserConfig.getInstance().adapter.notifyDataSetChanged();
+
+        getFragmentManager().popBackStack();
+    }
+
+
 }

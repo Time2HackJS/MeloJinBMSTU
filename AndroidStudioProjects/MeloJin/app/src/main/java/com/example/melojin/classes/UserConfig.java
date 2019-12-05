@@ -7,7 +7,9 @@ import java.util.ArrayList;
 
 public class UserConfig {
     private static UserConfig instance;
-    private UserConfig() {}
+
+    private UserConfig() {
+    }
 
     public static synchronized UserConfig getInstance() {
         if (instance == null) {
@@ -19,7 +21,7 @@ public class UserConfig {
 
     public User currentUser = new User();
     public ArrayList<Song> songList = new ArrayList<>();
-    public ArrayList<Song> savedSongs = new ArrayList<>();
+    public ArrayList<Song> savedSongList = new ArrayList<>();
     public ArrayList<User> users = new ArrayList<>();
     public Song clickedSong;
     public Integer prevPosition;
@@ -30,4 +32,5 @@ public class UserConfig {
     public String searchString;
     public SongListAdapter adapter;
     public SongListAdapter searchAdapter;
+    public User clickedUser = new User();
 }
