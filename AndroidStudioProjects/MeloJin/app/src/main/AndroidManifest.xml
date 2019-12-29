@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.melojin">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -10,8 +11,9 @@
         android:label="MeloJin"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".activities.ProfileActivity"></activity>
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name=".activities.ProfileActivity" />
         <activity
             android:name=".activities.SliderActivity"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -31,5 +33,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

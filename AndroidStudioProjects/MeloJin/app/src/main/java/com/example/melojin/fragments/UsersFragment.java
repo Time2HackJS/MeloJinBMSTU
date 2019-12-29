@@ -15,16 +15,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.melojin.R;
-import com.example.melojin.activities.LoginActivity;
-import com.example.melojin.activities.UsersActivity;
-import com.example.melojin.classes.Song;
 import com.example.melojin.classes.User;
 import com.example.melojin.classes.UserAdapter;
 import com.example.melojin.classes.UserConfig;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -32,7 +26,6 @@ public class UsersFragment extends Fragment {
 
     private ListView userListView;
     private UserAdapter adapter;
-    DatabaseReference databaseReference;
     FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
 
     @Nullable

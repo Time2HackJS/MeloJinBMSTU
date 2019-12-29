@@ -196,13 +196,14 @@ public class SliderActivity extends AppCompatActivity implements NavigationView.
 
             case R.id.nav_logout:
                 Toast.makeText(this, "Successfuly logged out!", Toast.LENGTH_SHORT).show();
-                FirebaseAuth.getInstance().signOut();
-                Intent intToLogin = new Intent(SliderActivity.this, LoginActivity.class);
 
                 FirebaseDatabase.getInstance().getReference("users")
                         .child(mFirebaseAuth.getCurrentUser().getUid())
                         .child("current_song")
                         .setValue("");
+
+                FirebaseAuth.getInstance().signOut();
+                Intent intToLogin = new Intent(SliderActivity.this, LoginActivity.class);
 
                 startActivity(intToLogin);
                 break;

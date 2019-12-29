@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
-import android.widget.Filter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,11 +19,8 @@ import com.example.melojin.R;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-
-
 
 public class SongListAdapter extends ArrayAdapter<Song> {
 
@@ -32,13 +28,6 @@ public class SongListAdapter extends ArrayAdapter<Song> {
 
     private Context mContext;
     int mResource;
-
-    // used before FirebaseStorage images were used
-    /*
-    public static int getImageId(Context context, String imageName) {
-        return context.getResources().getIdentifier("drawable/" + imageName, null, context.getPackageName());
-    }
-     */
 
     public SongListAdapter(Context context, int resource, ArrayList<Song> objects) {
         super(context, resource, objects);
